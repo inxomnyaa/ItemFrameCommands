@@ -1,7 +1,12 @@
-  name: ItemFrameCommands
-  main: xenialdan\ItemFrameCommands\Loader
-  version: 0.0.0
-  api: ['3.0.0-ALPHA7']
-  load: POSTWORLD
-  authors: [XenialDan]
-  prefix: "ItemFrameCommands"
+---
+name: ItemFrameCommands
+main: xenialdan\ItemFrameCommands\Loader
+version: 1.0.0
+api:
+- 3.0.0-ALPHA9
+- 3.0.0-ALPHA10
+load: POSTWORLD
+authors:
+- XenialDan
+prefix: ItemFrameCommands
+...
