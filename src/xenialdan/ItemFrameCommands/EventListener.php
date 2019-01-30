@@ -79,8 +79,9 @@ class EventListener implements Listener{
 					return;
 				} elseif (isset($itemframe->namedtag->commands)){
 					$event->setCancelled();
-					$commands = $itemframe->namedtag->commands->getValue();
-					foreach ($commands as $id => $command){
+                    $nbt = $itemframe->getSpawnCompound();
+                    $commands = $nbt->getListTag("commands");
+                    foreach ($commands->getAllValues() as $id => $command) {
 						if ($command['as'] === 'console')
 							$player->getServer()->dispatchCommand(new ConsoleCommandSender(), str_ireplace("{PLAYER}", $player->getName(), $command['cmd']));
 						if ($command['as'] === 'player')
@@ -92,21 +93,18 @@ class EventListener implements Listener{
 	}
 
 	private function addCommand(Player $player, ItemFrame $itemframe){
-		$commands = [];
-		if (isset($itemframe->namedtag->commands)){
-			$commands = $itemframe->namedtag->commands->getValue();
-		}
+        $nbt = $itemframe->getSpawnCompound();
+        $commands = $nbt->getListTag("commands")->getAllValues();
 		$commands[] = [new StringTag('as', array_shift(Loader::$editvalues[$player->getLowerCaseName()])), new StringTag('cmd', $command = implode(" ", Loader::$editvalues[$player->getLowerCaseName()]))];
-		var_dump($commands);
-		$itemframe->namedtag->commands = new ListTag("commands", $commands);
+        $itemframe->getSpawnCompound()->setTag(new ListTag("commands", $commands));
 		$player->sendMessage(TextFormat::GREEN . $this->owner->getLanguage()->translateString("command.addcmd.adding", [$command]));
 	}
 
 	private function removeCommand(Player $player, ItemFrame $itemframe){
 		$index = intval(array_shift(Loader::$editvalues[$player->getLowerCaseName()]));
-		print $index;
 		$command = $this->owner->getLanguage()->translateString("command.delcmd.none");
-		$commands = $itemframe->namedtag->commands->getValue()??[];
+        $nbt = $itemframe->getSpawnCompound();
+        $commands = $nbt->getListTag("commands")->getAllValues();
 		if (isset($commands[$index])){
 			$command = $commands[$index]['cmd'];
 			unset($commands[$index]);
@@ -114,20 +112,22 @@ class EventListener implements Listener{
 		} else{
 			$player->sendMessage(TextFormat::GREEN . $this->owner->getLanguage()->translateString("command.delcmd.removing.failed", [$command]));
 		}
-		$itemframe->namedtag->commands = new ListTag("commands", $commands);
+        $itemframe->getSpawnCompound()->setTag(new ListTag("commands", $commands));
 	}
 
 	private function removeAllCommands(Player $player, ItemFrame $itemframe){
 		$command = $this->owner->getLanguage()->translateString("command.delcmd.none");
 		$player->sendMessage(TextFormat::GREEN . $this->owner->getLanguage()->translateString("command.delallcmd.removing", [$command]));
-		$itemframe->namedtag->commands = new ListTag("commands");
+        $itemframe->getSpawnCompound()->setTag(new ListTag("commands", []));
 	}
 
 	private function listCommands(Player $player, ItemFrame $itemframe){
 		$player->sendMessage(TextFormat::GREEN . $this->owner->getLanguage()->translateString("divider"));
 		$player->sendMessage(TextFormat::GREEN . $this->owner->getLanguage()->translateString("command.list.header"));
-		if (isset($itemframe->namedtag->commands)){
-			$commands = $itemframe->namedtag->commands->getValue();
+        $nbt = $itemframe->getSpawnCompound();
+        $listTag = $nbt->getListTag("commands");
+        if ($listTag instanceof ListTag) {
+            $commands = $listTag->getAllValues();
 			foreach ($commands as $id => $command){
 				$player->sendMessage(TextFormat::GOLD . "[" . $id . "]" . TextFormat::GREEN . "[" . $command['as'] . "] " . TextFormat::GREEN . ">> " . $command['cmd']);
 			}

@@ -5,6 +5,9 @@ namespace xenialdan\ItemFrameCommands\subcommand;
 use pocketmine\command\CommandSender;
 use pocketmine\Player;
 use pocketmine\plugin\Plugin;
+use xenialdan\customui\elements\Dropdown;
+use xenialdan\customui\elements\Input;
+use xenialdan\customui\windows\CustomForm;
 use xenialdan\ItemFrameCommands\Loader;
 
 class AddSubCommand extends SubCommand{
@@ -17,12 +20,16 @@ class AddSubCommand extends SubCommand{
 	}
 
 	public function execute(CommandSender $sender, array $args): bool{
-		$player = $sender->getServer()->getPlayer($sender->getName());
-		if (count($args) < 2) return false;
-		if ($args[0] !== 'player' && $args[0] !== 'console') return false;
-		str_replace('/', '', $args[1]);
-		Loader::$editing[$player->getLowerCaseName()] = Loader::EDIT_ADDCOMMAND;
-		Loader::$editvalues[$player->getLowerCaseName()] = $args;
+        if (!$sender instanceof Player) return false;
+        $form = new CustomForm("Add command");
+        $form->addElement(new Dropdown("Execute as", ["player", "console"]));
+        $form->addElement(new Input("Command", "Command"));
+        $form->setCallable(function (Player $player, $data) {
+            str_replace('/', '', $data[1]);
+            Loader::$editing[$player->getLowerCaseName()] = Loader::EDIT_ADDCOMMAND;
+            Loader::$editvalues[$player->getLowerCaseName()] = $data;
+        });
+        $sender->sendForm($form);
 		return true;
 	}
 
