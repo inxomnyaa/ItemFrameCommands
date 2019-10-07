@@ -2,63 +2,34 @@
 
 namespace xenialdan\ItemFrameCommands\subcommand;
 
+use CortexPE\Commando\args\IntegerArgument;
+use CortexPE\Commando\BaseSubCommand;
 use pocketmine\command\CommandSender;
 use pocketmine\Player;
-use pocketmine\plugin\Plugin;
+use pocketmine\utils\TextFormat;
 use xenialdan\ItemFrameCommands\Loader;
 
-class RemoveSubCommand extends SubCommand{
-	/** @var Loader */
-	private $plugin;
+class RemoveSubCommand extends BaseSubCommand
+{
 
-	public function __construct(Plugin $plugin){
-		$this->plugin = $plugin;
-		parent::__construct($plugin);
-	}
+    /**
+     * This is where all the arguments, permissions, sub-commands, etc would be registered
+     */
+    protected function prepare(): void
+    {
+        $this->setPermission("frame.delcmd");
+        $this->registerArgument(0, new IntegerArgument("index"));
+    }
 
-	public function execute(CommandSender $sender, array $args): bool{
-		$player = $sender->getServer()->getPlayer($sender->getName());
-		if (count($args) < 1) return false;
-		if (!is_numeric($args[0])) return false;
-		$args[0] = intval($args[0]);
-		Loader::$editing[$player->getLowerCaseName()] = Loader::EDIT_REMOVECOMMAND;
-		Loader::$editvalues[$player->getLowerCaseName()] = $args;
-		return true;
-	}
-
-	/**
-	 * @param CommandSender $sender
-	 * @return bool
-	 */
-	public function canUse(CommandSender $sender){
-		return ($sender instanceof Player) and $sender->hasPermission("frame.delcmd");
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getUsage(){
-		return $this->plugin->getLanguage()->translateString("command.delcmd.usage", []);
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getName(){
-		return $this->plugin->getLanguage()->translateString("command.delcmd", []);
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getDescription(){
-		return $this->plugin->getLanguage()->translateString("command.delcmd.desc", []);
-	}
-
-	/**
-	 * @return string[]
-	 */
-	public function getAliases(){
-		return [];
-	}
+    public function onRun(CommandSender $sender, string $aliasUsed, array $args): void
+    {
+        if (!$sender instanceof Player) {
+            $sender->sendMessage(Loader::getInstance()->getLanguage()->translateString("runingame"));
+            return;
+        }
+        $args["index"] = intval($args["index"]);
+        Loader::$editing[$sender->getLowerCaseName()] = Loader::EDIT_REMOVECOMMAND;
+        Loader::$editvalues[$sender->getLowerCaseName()] = $args;
+        $sender->sendMessage(TextFormat::GREEN . Loader::getInstance()->getLanguage()->translateString("command.click"));
+    }
 }

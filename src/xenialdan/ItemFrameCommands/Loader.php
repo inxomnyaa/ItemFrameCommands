@@ -23,11 +23,30 @@ class Loader extends PluginBase{
 	const EDIT_SETITEM = 7;
 	const EDIT_REMOVEITEM = 8;
 
-	public function onEnable(){
+    /** @var Loader */
+    private static $instance = null;
+
+    /**
+     * Returns an instance of the plugin
+     * @return Loader
+     */
+    public static function getInstance()
+    {
+        return self::$instance;
+    }
+
+    public function onLoad()
+    {
+        self::$instance = $this;
+    }
+
+    public function onEnable()
+    {
 		$lang = $this->getConfig()->get("language", BaseLang::FALLBACK_LANGUAGE);
-		$this->baseLang = new BaseLang($lang, $this->getFile() . "resources/");
-		$this->getServer()->getPluginManager()->registerEvents(new EventListener($this), $this);
-		$this->getServer()->getCommandMap()->register(Commands::class, new Commands($this));
+        $this->baseLang = new BaseLang($lang, $this->getFile() . "resources" . DIRECTORY_SEPARATOR . "lang" . DIRECTORY_SEPARATOR);
+        /** @noinspection PhpUnhandledExceptionInspection */
+        $this->getServer()->getPluginManager()->registerEvents(new EventListener($this), $this);
+        $this->getServer()->getCommandMap()->register("ItemFrameCommands", new Commands($this->getLanguage()->translateString("command.name"), $this->getLanguage()->translateString("command.desc")));
 	}
 
 	/**

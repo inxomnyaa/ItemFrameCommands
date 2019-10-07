@@ -2,59 +2,30 @@
 
 namespace xenialdan\ItemFrameCommands\subcommand;
 
+use CortexPE\Commando\BaseSubCommand;
 use pocketmine\command\CommandSender;
 use pocketmine\Player;
-use pocketmine\plugin\Plugin;
+use pocketmine\utils\TextFormat;
 use xenialdan\ItemFrameCommands\Loader;
 
-class ListSubCommand extends SubCommand{
-	/** @var Loader */
-	private $plugin;
+class ListSubCommand extends BaseSubCommand
+{
 
-	public function __construct(Plugin $plugin){
-		$this->plugin = $plugin;
-		parent::__construct($plugin);
-	}
+    /**
+     * This is where all the arguments, permissions, sub-commands, etc would be registered
+     */
+    protected function prepare(): void
+    {
+        $this->setPermission("frame.list");
+    }
 
-	public function execute(CommandSender $sender, array $args): bool{
-		$player = $sender->getServer()->getPlayer($sender->getName());
-		Loader::$editing[$player->getLowerCaseName()] = Loader::EDIT_LISTCOMMANDS;
-		return true;
-	}
-
-	/**
-	 * @param CommandSender $sender
-	 * @return bool
-	 */
-	public function canUse(CommandSender $sender){
-		return ($sender instanceof Player) and $sender->hasPermission("frame.list");
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getUsage(){
-		return $this->plugin->getLanguage()->translateString("command.list.usage", []);
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getName(){
-		return $this->plugin->getLanguage()->translateString("command.list", []);
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getDescription(){
-		return $this->plugin->getLanguage()->translateString("command.list.desc", []);
-	}
-
-	/**
-	 * @return string[]
-	 */
-	public function getAliases(){
-		return [];
-	}
+    public function onRun(CommandSender $sender, string $aliasUsed, array $args): void
+    {
+        if (!$sender instanceof Player) {
+            $sender->sendMessage(Loader::getInstance()->getLanguage()->translateString("runingame"));
+            return;
+        }
+        Loader::$editing[$sender->getLowerCaseName()] = Loader::EDIT_LISTCOMMANDS;
+        $sender->sendMessage(TextFormat::GREEN . Loader::getInstance()->getLanguage()->translateString("command.click"));
+    }
 }

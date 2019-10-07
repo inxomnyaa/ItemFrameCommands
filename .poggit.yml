@@ -3,6 +3,6 @@ projects:
   ItemFrameCommands:
     path: ""
     libs:
-    - src: thebigsmilexd/customui/customui
-      version: ^3.0.0
+    - src: CortexPE/Commando/Commando
+      version: ^0.3.1
 ...

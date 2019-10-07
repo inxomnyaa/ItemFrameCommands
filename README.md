@@ -2,12 +2,12 @@
 Run commands via item frames
 
 ## Features
-This plugin allows you to add commands to itemframes, which execute when a player hits the frame
+This plugin allows you to add commands to item frames, which execute when a player hits the frame
 
 It allows commands to be executed as player or as console.
 
 ## Usage
-Usage is quite simple. First you place and item frame. Then you can add an item if you'd like, but that is not neccessary, as it can be done later via a command.
+Usage is quite simple. First you place and item frame. Then you can add an item if you'd like, but that is not necessary, as it can be done later via a command.
 
 Then you run `/frame addcmd`, which opens an UI, where you select the executor and command
 

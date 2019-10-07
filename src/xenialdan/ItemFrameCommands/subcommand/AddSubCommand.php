@@ -2,70 +2,73 @@
 
 namespace xenialdan\ItemFrameCommands\subcommand;
 
+use CortexPE\Commando\args\StringEnumArgument;
+use CortexPE\Commando\args\TextArgument;
+use CortexPE\Commando\BaseSubCommand;
+use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
+use pocketmine\network\mcpe\protocol\AvailableCommandsPacket;
 use pocketmine\Player;
-use pocketmine\plugin\Plugin;
-use xenialdan\customui\elements\Dropdown;
-use xenialdan\customui\elements\Input;
-use xenialdan\customui\windows\CustomForm;
+use pocketmine\utils\TextFormat;
 use xenialdan\ItemFrameCommands\Loader;
 
-class AddSubCommand extends SubCommand{
-	/** @var Loader */
-	private $plugin;
+class AddSubCommand extends BaseSubCommand
+{
+    /**
+     * @throws \CortexPE\Commando\exception\ArgumentOrderException
+     */
+    protected function prepare(): void
+    {
+        $this->setPermission("frame.addcmd");
+        $stringEnumArgument = new class("as") extends StringEnumArgument
+        {
+            protected const VALUES = [
+                "player" => "p",
+                "console" => "c",
+            ];
 
-	public function __construct(Plugin $plugin){
-		$this->plugin = $plugin;
-		parent::__construct($plugin);
-	}
+            public function getTypeName(): string
+            {
+                return "string";
+            }
 
-	public function execute(CommandSender $sender, array $args): bool{
-        if (!$sender instanceof Player) return false;
-        $form = new CustomForm("Add command");
-        $form->addElement(new Dropdown("Execute as", ["player", "console"]));
-        $form->addElement(new Input("Command", "Command"));
-        $form->setCallable(function (Player $player, $data) {
-            str_replace('/', '', $data[1]);
-            Loader::$editing[$player->getLowerCaseName()] = Loader::EDIT_ADDCOMMAND;
-            Loader::$editvalues[$player->getLowerCaseName()] = $data;
-        });
-        $sender->sendForm($form);
-		return true;
-	}
+            public function parse(string $argument, CommandSender $sender)
+            {
+                return $this->getValue($argument);
+            }
+        };
+        $commandArgument = new class("command") extends TextArgument
+        {
+            public function getNetworkType(): int
+            {
+                return AvailableCommandsPacket::ARG_TYPE_COMMAND;
+            }
 
-	/**
-	 * @param CommandSender $sender
-	 * @return bool
-	 */
-	public function canUse(CommandSender $sender){
-		return ($sender instanceof Player) and $sender->hasPermission("frame.addcmd");
-	}
+            public function getTypeName(): string
+            {
+                return "command";
+            }
 
-	/**
-	 * @return string
-	 */
-	public function getUsage(){
-		return $this->plugin->getLanguage()->translateString("command.addcmd.usage", []);
-	}
+            public function canParse(string $testString, CommandSender $sender): bool
+            {
+                $commandName = "";
+                $args = explode(" ", $testString);
+                $command = Loader::getInstance()->getServer()->getCommandMap()->matchCommand($commandName, $args);
+                return $command instanceof Command;
+            }
+        };
+        $this->registerArgument(0, $stringEnumArgument);
+        $this->registerArgument(1, $commandArgument);
+    }
 
-	/**
-	 * @return string
-	 */
-	public function getName(){
-		return $this->plugin->getLanguage()->translateString("command.addcmd", []);
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getDescription(){
-		return $this->plugin->getLanguage()->translateString("command.addcmd.desc", []);
-	}
-
-	/**
-	 * @return string[]
-	 */
-	public function getAliases(){
-		return [];
-	}
+    public function onRun(CommandSender $sender, string $aliasUsed, array $args): void
+    {
+        if (!$sender instanceof Player) {
+            $sender->sendMessage(Loader::getInstance()->getLanguage()->translateString("runingame"));
+            return;
+        }
+        Loader::$editing[$sender->getLowerCaseName()] = Loader::EDIT_ADDCOMMAND;
+        Loader::$editvalues[$sender->getLowerCaseName()] = $args;
+        $sender->sendMessage(TextFormat::GREEN . Loader::getInstance()->getLanguage()->translateString("command.click"));
+    }
 }

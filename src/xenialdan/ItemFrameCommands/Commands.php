@@ -2,11 +2,9 @@
 
 namespace xenialdan\ItemFrameCommands;
 
+use CortexPE\Commando\args\BaseArgument;
+use CortexPE\Commando\BaseCommand;
 use pocketmine\command\CommandSender;
-use pocketmine\command\PluginCommand;
-use pocketmine\Player;
-use pocketmine\plugin\Plugin;
-use pocketmine\utils\TextFormat;
 use xenialdan\ItemFrameCommands\subcommand\AbortSubCommand;
 use xenialdan\ItemFrameCommands\subcommand\AddSubCommand;
 use xenialdan\ItemFrameCommands\subcommand\ListSubCommand;
@@ -16,72 +14,32 @@ use xenialdan\ItemFrameCommands\subcommand\RemoveNameSubCommand;
 use xenialdan\ItemFrameCommands\subcommand\RemoveSubCommand;
 use xenialdan\ItemFrameCommands\subcommand\SetItemSubCommand;
 use xenialdan\ItemFrameCommands\subcommand\SetNameSubCommand;
-use xenialdan\ItemFrameCommands\subcommand\SubCommand;
 
-class Commands extends PluginCommand{
-	/** @var Loader */
-	private $plugin;
-	private $subCommands = [];
+class Commands extends BaseCommand
+{
 
-	/* @var SubCommand[] */
-	private $commandObjects = [];
+    protected function prepare(): void
+    {
+        $this->setPermission("frame");
+        $lang = Loader::getInstance()->getLanguage();
+        $this->registerSubCommand(new AbortSubCommand($lang->translateString("command.abort"), $lang->translateString("command.abort.desc")));
+        $this->registerSubCommand(new AddSubCommand($lang->translateString("command.addcmd"), $lang->translateString("command.addcmd.desc")));
+        $this->registerSubCommand(new ListSubCommand($lang->translateString("command.list"), $lang->translateString("command.list.desc")));
+        $this->registerSubCommand(new RemoveAllSubCommand($lang->translateString("command.delallcmd"), $lang->translateString("command.delallcmd.desc")));
+        $this->registerSubCommand(new RemoveItemSubCommand($lang->translateString("command.removeitem"), $lang->translateString("command.removeitem.desc")));
+        $this->registerSubCommand(new RemoveNameSubCommand($lang->translateString("command.removename"), $lang->translateString("command.removename.desc")));
+        $this->registerSubCommand(new RemoveSubCommand($lang->translateString("command.delcmd"), $lang->translateString("command.delcmd.desc")));
+        $this->registerSubCommand(new SetItemSubCommand($lang->translateString("command.setitem"), $lang->translateString("command.setitem.desc")));
+        $this->registerSubCommand(new SetNameSubCommand($lang->translateString("command.setname"), $lang->translateString("command.setname.desc")));
+    }
 
-	public function __construct(Plugin $plugin){
-		$this->plugin = $plugin;
-		parent::__construct($this->plugin->getLanguage()->translateString("command.name", []), $plugin);
-		$this->setAliases([]);
-		$this->setPermission("frame");
-		$this->setDescription($this->plugin->getLanguage()->translateString("command.desc", []));
-
-		$this->loadSubCommand(new AbortSubCommand($plugin));
-		$this->loadSubCommand(new AddSubCommand($plugin));
-		$this->loadSubCommand(new ListSubCommand($plugin));
-		$this->loadSubCommand(new RemoveAllSubCommand($plugin));
-		$this->loadSubCommand(new RemoveItemSubCommand($plugin));
-		$this->loadSubCommand(new RemoveNameSubCommand($plugin));
-		$this->loadSubCommand(new RemoveSubCommand($plugin));
-		$this->loadSubCommand(new SetItemSubCommand($plugin));
-		$this->loadSubCommand(new SetNameSubCommand($plugin));
-	}
-
-	private function loadSubCommand(SubCommand $command){
-		$this->commandObjects[] = $command;
-		$commandId = count($this->commandObjects) - 1;
-		$this->subCommands[$command->getName()] = $commandId;
-		foreach ($command->getAliases() as $alias){
-			$this->subCommands[$alias] = $commandId;
-		}
-	}
-
-	public function execute(CommandSender $sender, string $commandLabel, array $args): bool{
-		if (!isset($args[0])){
-			return $this->sendHelp($sender);
-		}
-		$subCommand = strtolower(array_shift($args));
-		if (!isset($this->subCommands[$subCommand])){
-			return $this->sendHelp($sender);
-		}
-		$command = $this->commandObjects[$this->subCommands[$subCommand]];
-		$canUse = $command->canUse($sender);
-		if ($canUse){
-			if (!$command->execute($sender, $args)){
-				$sender->sendMessage($this->plugin->getLanguage()->translateString("command.usage", [$command->getName(), $command->getUsage()]));
-			}
-		} elseif (!($sender instanceof Player)){
-			$sender->sendMessage(TextFormat::RED . $this->plugin->getLanguage()->translateString("runingame", []));
-		} else{
-			$sender->sendMessage(TextFormat::RED . $this->plugin->getLanguage()->translateString("noperm", []));
-		}
-		return true;
-	}
-
-	private function sendHelp(CommandSender $sender){
-		$sender->sendMessage("===========[ItemFrameCommands commands]===========");
-		foreach ($this->commandObjects as $command){
-			if ($command->canUse($sender)){
-				$sender->sendMessage($this->plugin->getLanguage()->translateString("subcommand.usage", [$command->getName(), $command->getUsage(), $command->getDescription()]));
-			}
-		}
-		return true;
-	}
+    /**
+     * @param CommandSender $sender
+     * @param string $aliasUsed
+     * @param BaseArgument[] $args
+     */
+    public function onRun(CommandSender $sender, string $aliasUsed, array $args): void
+    {
+        $sender->sendMessage($this->getUsage());
+    }
 }
